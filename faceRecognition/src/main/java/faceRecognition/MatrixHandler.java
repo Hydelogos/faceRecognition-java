@@ -2,11 +2,14 @@ package faceRecognition;
 
 import java.util.ArrayList;
 
+import org.apache.commons.math3.stat.correlation.Covariance;
+
 public class MatrixHandler {
 
     // Chaque image devra faire la meme taille en terme de pixels
-    ArrayList<int[]>   images;
-    ArrayList<float[]> reducedImages;
+    ArrayList<int[]>    images;
+    ArrayList<double[]> reducedImages;
+    double[][]          covarianceMatrix;
 
     public MatrixHandler() {
         this.images = new ArrayList<int[]>();
@@ -40,11 +43,11 @@ public class MatrixHandler {
     // dans le tableau. Par exemple (image1Pixel1 + image2Pixel1)/nombreImage
     // Puis on enregistre chaque moyenne dans un tableau faisant la taille exact
     // d'un vecteur d'image
-    public float[] calculateMean() {
-        float[] mean = new float[this.images.get( 0 ).length];
+    public double[] calculateMean() {
+        double[] mean = new double[this.images.get( 0 ).length];
         for ( int index = 0; index < this.images.get( 0 ).length; index++ ) {
-            float pixelMean = 0;
-            for ( int[] image : images ) {
+            double pixelMean = 0.00000;
+            for ( int[] image : this.images ) {
                 pixelMean += image[index];
             }
             pixelMean /= this.images.get( 0 ).length;
@@ -56,10 +59,10 @@ public class MatrixHandler {
     // On recentre chaque pixel selon l'origine en lui déduisant la moyenne
     // calculée precedemment, chaque pixel devra etre deduit de la moyenne a la
     // meme position dans le tableau
-    public void calculateReducedMatrix( float[] mean ) {
-        this.reducedImages = new ArrayList<float[]>();
-        for ( int[] image : images ) {
-            this.reducedImages.add( new float[this.images.get( 0 ).length] );
+    public void calculateReducedMatrix( double[] mean ) {
+        this.reducedImages = new ArrayList<double[]>();
+        for ( int[] image : this.images ) {
+            this.reducedImages.add( new double[this.images.get( 0 ).length] );
             for ( int index = 0; index < this.images.get( 0 ).length; index++ ) {
                 this.reducedImages.get( this.reducedImages.size() - 1 )[index] = image[index] - mean[index];
             }
@@ -69,13 +72,60 @@ public class MatrixHandler {
     // Pour calculer la matrice de covariance il est nécessaire de calculer la
     // matrice transposée de la matrice réduite recupérée grace à
     // calculateReducedMatrix
-    public void transposeMatrix() {
-
+    public ArrayList<double[]> transposeMatrix() {
+        ArrayList<double[]> transposed = new ArrayList<double[]>();
+        int indexImage = 0;
+        for ( int index = 0; index < this.reducedImages.get( 0 ).length; index++ ) {
+            transposed.add( new double[this.reducedImages.size()] );
+            for ( double[] image : this.reducedImages ) {
+                transposed.get( transposed.size() - 1 )[indexImage] = image[index];
+                indexImage++;
+            }
+            indexImage = 0;
+        }
+        return transposed;
     }
 
-    // On calcule la matrice de covariance via la matrice réduite et la matrice
-    // transposée
-    public void calculateCovariance() {
+    // une methode pour multiplier deux matrices entre elles, elle renvoie les
+    // arraylist sous forme de tableau de double en 2D pour faciliter la suite
+    // du processus
+    public double[][] multiplicar( ArrayList<double[]> A, ArrayList<double[]> B ) {
 
+        int aRows = A.size();
+        int aColumns = A.get( 0 ).length;
+        int bRows = B.size();
+        int bColumns = B.get( 0 ).length;
+
+        if ( aColumns != bRows ) {
+            throw new IllegalArgumentException( "A:Rows: " + aColumns + " did not match B:Columns " + bRows + "." );
+        }
+
+        double[][] C = new double[aRows][bColumns];
+        for ( int i = 0; i < aRows; i++ ) {
+            for ( int j = 0; j < bColumns; j++ ) {
+                C[i][j] = 0.0000;
+            }
+        }
+
+        for ( int i = 0; i < aRows; i++ ) { // aRow
+            for ( int j = 0; j < bColumns; j++ ) { // bColumn
+                for ( int k = 0; k < aColumns; k++ ) { // aColumn
+                    C[i][j] += A.get( i )[k] * B.get( k )[j];
+                }
+            }
+        }
+
+        return C;
+    }
+
+    // On calcule la matrice de covariance via la matrice réduite multipliée par
+    // la matrice
+    // transposée.
+    public void calculateCovariance() {
+        ArrayList<double[]> transposed = this.transposeMatrix();
+        double[][] multiplied = this.multiplicar( this.reducedImages, transposed );
+        Covariance co = new Covariance( multiplied );
+        double[][] covariance = co.getCovarianceMatrix().getData();
+        this.covarianceMatrix = covariance;
     }
 }
