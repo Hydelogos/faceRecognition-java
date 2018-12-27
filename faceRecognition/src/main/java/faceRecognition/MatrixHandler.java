@@ -2,6 +2,8 @@ package faceRecognition;
 
 import java.util.ArrayList;
 
+import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.apache.commons.math3.stat.correlation.Covariance;
 
 public class MatrixHandler {
@@ -9,7 +11,8 @@ public class MatrixHandler {
     // Chaque image devra faire la meme taille en terme de pixels
     ArrayList<int[]>    images;
     ArrayList<double[]> reducedImages;
-    double[][]          covarianceMatrix;
+    RealMatrix          covarianceMatrix;
+    RealMatrix          svdMatrix;
 
     public MatrixHandler() {
         this.images = new ArrayList<int[]>();
@@ -123,9 +126,14 @@ public class MatrixHandler {
     // transposée.
     public void calculateCovariance() {
         ArrayList<double[]> transposed = this.transposeMatrix();
-        double[][] multiplied = this.multiplicar( this.reducedImages, transposed );
+        double[][] multiplied = multiplicar( this.reducedImages, transposed );
         Covariance co = new Covariance( multiplied );
-        double[][] covariance = co.getCovarianceMatrix().getData();
+        RealMatrix covariance = co.getCovarianceMatrix();
         this.covarianceMatrix = covariance;
+    }
+
+    public void calculateSVD() {
+        SingularValueDecomposition svd = new SingularValueDecomposition( this.covarianceMatrix );
+        this.svdMatrix = svd.getU();
     }
 }
