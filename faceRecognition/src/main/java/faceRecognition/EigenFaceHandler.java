@@ -72,6 +72,7 @@ public class EigenFaceHandler {
         return this.multiplicar( input.getData(), transposedEigenFace );
     }
 
+    // il faut normaliser l'eigenface pour pouvoir l'utiliser sans disparité
     public double[][] normalizeEigenface( double[][] eigenface ) {
         double min = eigenface[0][0];
         double max = eigenface[0][0];
