@@ -72,12 +72,51 @@ public class EigenFaceHandler {
         return this.multiplicar( input.getData(), transposedEigenFace );
     }
 
+    public double[][] normalizeEigenface( double[][] eigenface ) {
+        double min = eigenface[0][0];
+        double max = eigenface[0][0];
+        for ( double[] face : eigenface ) {
+            for ( double pixel : face ) {
+                if ( pixel > max ) {
+                    max = pixel;
+                }
+                if ( pixel < min ) {
+                    min = pixel;
+                }
+            }
+        }
+        double[][] normalized = new double[eigenface.length][eigenface[0].length];
+        int index = 0;
+        int index2 = 0;
+        for ( double[] face : eigenface ) {
+
+            for ( double pixel : face ) {
+                normalized[index][index2] = 255 * ( pixel - min ) / ( max - min );
+                index2++;
+            }
+            index++;
+        }
+        return normalized;
+    }
+
     // sert à savoir si les poids de deux images sont eloignés ou non via un
     // calcul de distance euclidien
-    public double getDistance( double[][] first, double[][] second ) {
-        // retenir qu'une image ne fait qu'un seul array et donc un array
-        // d'eigenface est equivalent à un seul systeme? verifier ca demain lors
-        // des finitions
-        return 0.0000;
+    public double getDistance( double[][] first, double[][] second, double[][] eigenface ) {
+        int pixelCount = first.length * first[0].length;
+        int eigenCount = eigenface.length * eigenface[0].length;
+        int index = 0;
+        int index2 = 0;
+        double total = 0;
+        for ( double[] row : first ) {
+
+            for ( double pixel : row ) {
+                total += Math.pow( ( pixel - second[index][index2] ) / pixelCount, 2 );
+                index2++;
+            }
+            index++;
+        }
+        double step2 = Math.sqrt( total );
+        double step3 = step2 / Math.sqrt( eigenCount );
+        return step3;
     }
 }
